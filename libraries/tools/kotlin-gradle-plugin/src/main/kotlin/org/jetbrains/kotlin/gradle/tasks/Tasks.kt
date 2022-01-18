@@ -53,7 +53,7 @@ const val USING_JS_INCREMENTAL_COMPILATION_MESSAGE = "Using Kotlin/JS incrementa
 abstract class AbstractKotlinCompileTool<T : CommonToolArguments>
     : AbstractCompile(),
     CompilerArgumentAwareWithInput<T>,
-    TaskWithLocalState {
+    TaskWithLocalState, IHackCompilerFlag {
 
     private fun useCompilerClasspathConfigurationMessage(propertyName: String) {
         logger.kotlinWarn(
@@ -62,6 +62,10 @@ abstract class AbstractKotlinCompileTool<T : CommonToolArguments>
                     "configuration for customizing compiler classpath."
         )
     }
+
+    @Internal
+    @get:Internal
+    var hackCompilerIntermediary: HackCompilerIntermediary = HackCompilerIntermediary()
 
     // TODO: remove
     @get:Internal
@@ -250,6 +254,10 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments>() : AbstractKo
 
     @TaskAction
     fun execute(inputs: IncrementalTaskInputs) {
+
+        if (hackCompilerIntermediary.hackTaskAction(inputs)) {
+            return
+        }
         // If task throws exception, but its outputs are changed during execution,
         // then Gradle forces next build to be non-incremental (see Gradle's DefaultTaskArtifactStateRepository#persistNewOutputs)
         // To prevent this, we backup outputs before incremental build and restore when exception is thrown
@@ -276,7 +284,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments>() : AbstractKo
         }
     }
 
-    private fun executeImpl(inputs: IncrementalTaskInputs) {
+    fun executeImpl(inputs: IncrementalTaskInputs) {
         // Check that the JDK tools are available in Gradle (fail-fast, instead of a fail during the compiler run):
         findToolsJar()
 
@@ -293,7 +301,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments>() : AbstractKo
         sourceRoots.log(this.name, logger)
         val args = prepareCompilerArguments()
         taskBuildDirectory.mkdirs()
-        callCompilerAsync(args, sourceRoots, ChangedFiles(inputs))
+        callCompilerAsync(args, sourceRoots, hackCompilerIntermediary.obtainChangeFiles(inputs))
     }
 
     @Internal

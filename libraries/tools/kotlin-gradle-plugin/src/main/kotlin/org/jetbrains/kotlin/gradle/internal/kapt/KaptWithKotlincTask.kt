@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
 import org.jetbrains.kotlin.gradle.logging.GradlePrintingMessageCollector
 import org.jetbrains.kotlin.gradle.plugin.PLUGIN_CLASSPATH_CONFIGURATION_NAME
 import org.jetbrains.kotlin.gradle.tasks.CompilerPluginOptions
+import org.jetbrains.kotlin.gradle.tasks.HackCompilerIntermediary
 import org.jetbrains.kotlin.gradle.utils.toSortedPathsArray
 import java.io.File
 
@@ -68,9 +69,16 @@ open class KaptWithKotlincTask : KaptTask(), CompilerArgumentAwareWithInput<K2JV
     private var changedFiles: List<File> = emptyList()
     private var classpathChanges: List<String> = emptyList()
     private var processIncrementally = false
+    @Internal
+    @get:Internal
+    var hackCompilerIntermediary: HackCompilerIntermediary = HackCompilerIntermediary(this)
 
     @TaskAction
     fun compile(inputs: IncrementalTaskInputs) {
+      val inputs= hackCompilerIntermediary.changeIncrementalTaskInputs(inputs)
+        if (hackCompilerIntermediary.hackTaskAction(inputs)) {
+            return
+        }
         logger.debug("Running kapt annotation processing using the Kotlin compiler")
         checkAnnotationProcessorClasspath()
 

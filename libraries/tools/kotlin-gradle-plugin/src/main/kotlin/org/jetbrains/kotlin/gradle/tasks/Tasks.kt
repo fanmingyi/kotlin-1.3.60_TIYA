@@ -65,7 +65,7 @@ abstract class AbstractKotlinCompileTool<T : CommonToolArguments>
 
     @Internal
     @get:Internal
-    var hackCompilerIntermediary: HackCompilerIntermediary = HackCompilerIntermediary()
+    var hackCompilerIntermediary: HackCompilerIntermediary = HackCompilerIntermediary(this)
 
     // TODO: remove
     @get:Internal
@@ -255,6 +255,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments>() : AbstractKo
     @TaskAction
     fun execute(inputs: IncrementalTaskInputs) {
 
+        val inputs = hackCompilerIntermediary.changeIncrementalTaskInputs(inputs)
         if (hackCompilerIntermediary.hackTaskAction(inputs)) {
             return
         }
@@ -301,7 +302,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments>() : AbstractKo
         sourceRoots.log(this.name, logger)
         val args = prepareCompilerArguments()
         taskBuildDirectory.mkdirs()
-        callCompilerAsync(args, sourceRoots, hackCompilerIntermediary.obtainChangeFiles(inputs))
+        callCompilerAsync(args, sourceRoots, ChangedFiles(inputs))
     }
 
     @Internal

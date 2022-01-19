@@ -4,17 +4,29 @@
  */
 package org.jetbrains.kotlin.gradle.tasks
 
+import org.gradle.api.Task
 import org.gradle.api.tasks.incremental.IncrementalTaskInputs
-import org.jetbrains.kotlin.gradle.incremental.ChangedFiles
-import org.jetbrains.kotlin.incremental.ChangedFiles
 
-open class HackCompilerIntermediary {
+open class HackCompilerIntermediary constructor(val task: Task) {
 
     open fun hackTaskAction(input: IncrementalTaskInputs): Boolean {
         return false
     }
 
-    open fun obtainChangeFiles(input: IncrementalTaskInputs): ChangedFiles {
-        return ChangedFiles(input)
+    open fun changeIncrementalTaskInputs(input: IncrementalTaskInputs): IncrementalTaskInputs {
+        return input
     }
+//
+//    open fun obtainChangeFilesWrapper(input: IncrementalTaskInputs): ChangedFileWrapper? {
+//        return null
+//    }
+
+//    open fun obtainChangeFiles(input: IncrementalTaskInputs): ChangedFiles {
+//        val obtainChangeFilesWrapper = obtainChangeFilesWrapper(input)
+//        return if (obtainChangeFilesWrapper != null) {
+//            ChangedFileWrapper(emptyList(), emptyList()).convert()
+//        } else {
+//            return ChangedFiles(input)
+//        }
+//    }
 }
